@@ -24,24 +24,11 @@ jobs:
           npm ci || npm install
           npm run build
 
-      - name: Validate Firebase service account secret
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
-        run: |
-          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
-            echo "Missing FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP secret"
-            exit 1
-          fi
-          node -e "const raw = process.env.FIREBASE_SERVICE_ACCOUNT || ''; if (!raw) { console.error('Service account secret is empty'); process.exit(1); } let data; try { data = JSON.parse(raw); } catch (err) { console.error('Service account secret is not valid JSON: ' + err.message); process.exit(1); } const required = ['type', 'project_id', 'private_key', 'client_email']; const missing = required.filter((key) => !data[key]); if (missing.length) { console.error('Service account secret is missing required fields: ' + missing.join(', ')); process.exit(1); } console.log('Firebase service account secret is valid.');"
-
-      - name: Authenticate Firebase CLI
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
-        run: |
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GITHUB_WORKSPACE/firebase-service-account.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-service-account.json" >> "$GITHUB_ENV"
-          export GOOGLE_APPLICATION_CREDENTIALS="$GITHUB_WORKSPACE/firebase-service-account.json"
-
       - name: Deploy to Firebase Hosting
-        run: |
-          npx firebase-tools@13.29.1 deploy --only hosting --project civizen-civic-app --non-interactive
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}'
+          projectId: civizen-civic-app
+          channelId: live
+          firebaseToolsVersion: '13.29.1'
