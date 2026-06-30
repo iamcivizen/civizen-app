@@ -17,7 +17,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.16.0
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies and build
@@ -33,4 +33,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}'
           channelId: live
           projectId: civizen-civic-app
-          firebaseToolsVersion: '13.29.1'
+          firebaseToolsVersion: 'latest'
