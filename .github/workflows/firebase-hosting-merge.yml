@@ -7,6 +7,7 @@ on:
     branches:
       - main
       - master # Supports either main or master
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -26,11 +27,21 @@ jobs:
           echo "Build Time: $(date)" > public/build-timestamp.txt
           npm run build
 
+      - name: Write service account credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
+        run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "${{ runner.temp }}/sa.json"
+
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+        uses: nick-fields/retry@v3
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}'
-          channelId: live
-          projectId: civizen-civic-app
-          firebaseToolsVersion: 'latest'
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_on: error
+          command: npx firebase-tools@13.29.1 deploy --only hosting --project civizen-civic-app --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "${{ runner.temp }}/sa.json"
