@@ -10,8 +10,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
-      - name: Build Project
-        run: npm run build
+      - name: Install dependencies and build
+        run: |
+          npm ci || npm install
+          echo "Build Time: $(date)" > public/build-timestamp.txt
+          npm run build
       - name: Deploy to Firebase Hosting (Preview)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
