@@ -18,6 +18,7 @@ const initialState = {
   isLoggedIn: false,
   showLoginModal: false,
   demoMode: false,
+  sidebarOpen: false,
 };
 
 function appReducer(state, action) {
@@ -345,6 +346,18 @@ function appReducer(state, action) {
       return {
         ...state,
         showLoginModal: action.payload
+      };
+
+    case 'TOGGLE_SIDEBAR':
+      return {
+        ...state,
+        sidebarOpen: !state.sidebarOpen
+      };
+
+    case 'SET_SIDEBAR':
+      return {
+        ...state,
+        sidebarOpen: action.payload
       };
 
     case 'LOGOUT_USER':

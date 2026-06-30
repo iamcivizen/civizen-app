@@ -238,6 +238,13 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar-left">
+        <button 
+          className="sidebar-toggle-btn"
+          onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+          aria-label="Toggle navigation menu"
+        >
+          ☰
+        </button>
         <h1 className="navbar-title">{title}</h1>
       </div>
 
@@ -1194,7 +1201,7 @@ export default function Navbar() {
                       className="btn btn-secondary btn-sm"
                       style={{ justifyContent: 'center', fontSize: '0.7rem', padding: '0.35rem', background: 'rgba(255,255,255,0.05)' }}
                     >
-                      👩 Aisha (Reporter)
+                      👩 Aisha
                     </button>
                     <button
                       type="button"
@@ -1202,7 +1209,7 @@ export default function Navbar() {
                       className="btn btn-secondary btn-sm"
                       style={{ justifyContent: 'center', fontSize: '0.7rem', padding: '0.35rem', background: 'rgba(255,255,255,0.05)' }}
                     >
-                      🧔 Dave (Verifier)
+                      🧔 Dave
                     </button>
                   </div>
                 </div>

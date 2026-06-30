@@ -73,6 +73,7 @@ Once Xcode loads:
 2. Click the **Play** button to build and run the app.
 
 ---
+
 ## ⚙️ Capacitor Configuration Details
 * **App Name:** Civizen
 * **Package ID / Bundle Identifier:** `com.civizen.app`
