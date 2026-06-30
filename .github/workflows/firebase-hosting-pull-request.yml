@@ -40,10 +40,9 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
         run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT" > "$GITHUB_WORKSPACE/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$GITHUB_WORKSPACE/firebase-service-account.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-service-account.json" >> "$GITHUB_ENV"
-          CLIENT_EMAIL=$(node -e "const data = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}'); if (!data.client_email) { console.error('Missing client_email in Firebase service account'); process.exit(1); } console.log(data.client_email)")
-          npx firebase-tools@13.29.1 auth:activate-service-account "$CLIENT_EMAIL" --key-file "$GITHUB_WORKSPACE/firebase-service-account.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$GITHUB_WORKSPACE/firebase-service-account.json"
 
       - name: Deploy Preview to Firebase Hosting
         run: |
