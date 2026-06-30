@@ -57,6 +57,14 @@
   letter-spacing: -0.03em;
   margin-bottom: 0.35rem;
   line-height: 1;
+  text-decoration: none;
+  color: inherit;
+  width: fit-content;
+}
+
+.hero-brand:hover,
+.hero-brand:focus-visible {
+  text-decoration: none;
 }
 
 .hero-brand .brand-icon {

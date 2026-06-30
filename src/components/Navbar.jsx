@@ -92,6 +92,7 @@ export default function Navbar() {
   // Login Modal States
   const { showLoginModal } = state;
   const setShowLoginModal = (val) => dispatch({ type: 'SET_LOGIN_MODAL', payload: val });
+  const [authMode, setAuthMode] = useState('login');
   const [loginStep, setLoginStep] = useState(1); // 1 = Details, 2 = OTP
   const [loginForm, setLoginForm] = useState({
     name: '',
@@ -102,9 +103,16 @@ export default function Navbar() {
     gender: 'Male',
     occupation: 'Salaried Professional',
     address: '',
+    username: '',
+    password: '',
     consent: false
   });
   const [loginErrors, setLoginErrors] = useState({});
+  const [loginCredentials, setLoginCredentials] = useState({
+    username: '',
+    password: ''
+  });
+  const [loginCredentialsErrors, setLoginCredentialsErrors] = useState({});
   const [otpVal, setOtpVal] = useState('');
   const [otpError, setOtpError] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
@@ -119,6 +127,8 @@ export default function Navbar() {
       gender: 'Female',
       occupation: 'Salaried Professional',
       address: 'Flat 402, Shanti Niketan Apartments, 5th Main Road, HSR Layout, Bengaluru',
+      username: 'aisha',
+      password: 'demo1234',
       consent: true
     });
     setLoginErrors({});
@@ -134,6 +144,8 @@ export default function Navbar() {
       gender: 'Male',
       occupation: 'Self-Employed',
       address: 'House 14, 2nd Cross, Bellandur Lake Road, Bengaluru',
+      username: 'dave',
+      password: 'demo1234',
       consent: true
     });
     setLoginErrors({});
@@ -183,10 +195,41 @@ export default function Navbar() {
     dispatch({ type: 'SET_AADHAAR', payload: aadhaarInput });
   };
 
-  const handleLoginFormSubmit = (e) => {
+  const handleLoginCredentialsSubmit = (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!loginCredentials.username.trim()) {
+      errors.username = 'Username is required';
+    }
+    if (!loginCredentials.password.trim()) {
+      errors.password = 'Password is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setLoginCredentialsErrors(errors);
+      return;
+    }
+
+    setLoginCredentialsErrors({});
+    dispatch({
+      type: 'LOGIN_USER',
+      payload: {
+        name: loginCredentials.username,
+        username: loginCredentials.username,
+        password: loginCredentials.password
+      }
+    });
+    setShowLoginModal(false);
+    setAuthMode('login');
+    setLoginStep(1);
+  };
+
+  const handleSignupFormSubmit = (e) => {
     e.preventDefault();
     const errors = {};
     if (!loginForm.name.trim()) errors.name = 'Name is required';
+    if (!loginForm.username.trim()) errors.username = 'Username is required';
+    if (!loginForm.password.trim()) errors.password = 'Password is required';
     if (!loginForm.age) {
       errors.age = 'Age is required';
     } else if (Number(loginForm.age) < 18) {
@@ -232,6 +275,7 @@ export default function Navbar() {
       dispatch({ type: 'LOGIN_USER', payload: loginForm });
       setShowLoginModal(false);
       setLoginStep(1);
+      setAuthMode('login');
     }, 1200);
   };
 
@@ -1175,11 +1219,111 @@ export default function Navbar() {
                 {t("Join Civizen")}
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                {t("Enter details to sign up / verify identity")}
+                {authMode === 'login' ? t('Welcome back. Sign in to continue.') : t('Create your account to report and verify issues.')}
               </p>
             </div>
 
-            {loginStep === 1 ? (
+            <div style={{ display: 'flex', gap: '0.5rem', padding: '0.25rem', background: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginBottom: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('login');
+                  setLoginStep(1);
+                  setLoginErrors({});
+                  setLoginCredentialsErrors({});
+                }}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  borderRadius: '999px',
+                  padding: '0.55rem 0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: authMode === 'login' ? 'var(--accent-primary)' : 'transparent',
+                  color: authMode === 'login' ? '#fff' : 'var(--text-secondary)'
+                }}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('signup');
+                  setLoginStep(1);
+                  setLoginCredentialsErrors({});
+                }}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  borderRadius: '999px',
+                  padding: '0.55rem 0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: authMode === 'signup' ? 'var(--accent-primary)' : 'transparent',
+                  color: authMode === 'signup' ? '#fff' : 'var(--text-secondary)'
+                }}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            {authMode === 'login' ? (
+              <form onSubmit={handleLoginCredentialsSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter username"
+                    value={loginCredentials.username}
+                    onChange={e => setLoginCredentials({ ...loginCredentials, username: e.target.value })}
+                    style={{
+                      background: 'var(--bg-glass)',
+                      border: '1px solid var(--border-accent)',
+                      color: 'var(--text-primary)',
+                      borderRadius: '6px',
+                      padding: '0.5rem',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      outline: 'none'
+                    }}
+                  />
+                  {loginCredentialsErrors.username && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginCredentialsErrors.username}</span>}
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Enter password"
+                    value={loginCredentials.password}
+                    onChange={e => setLoginCredentials({ ...loginCredentials, password: e.target.value })}
+                    style={{
+                      background: 'var(--bg-glass)',
+                      border: '1px solid var(--border-accent)',
+                      color: 'var(--text-primary)',
+                      borderRadius: '6px',
+                      padding: '0.5rem',
+                      fontSize: '0.85rem',
+                      width: '100%',
+                      outline: 'none'
+                    }}
+                  />
+                  {loginCredentialsErrors.password && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginCredentialsErrors.password}</span>}
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ justifyContent: 'center', padding: '0.65rem', marginTop: '0.5rem', fontWeight: 700 }}
+                >
+                  Log In
+                </button>
+              </form>
+            ) : loginStep === 1 ? (
               <>
                 <div style={{
                   background: 'rgba(99, 102, 241, 0.08)',
@@ -1213,40 +1357,64 @@ export default function Navbar() {
                     </button>
                   </div>
                 </div>
-                <form onSubmit={handleLoginFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter full name"
-                    value={loginForm.name}
-                    onChange={e => setLoginForm({ ...loginForm, name: e.target.value })}
-                    style={{
-                      background: 'var(--bg-glass)',
-                      border: '1px solid var(--border-accent)',
-                      color: 'var(--text-primary)',
-                      borderRadius: '6px',
-                      padding: '0.5rem',
-                      fontSize: '0.85rem',
-                      width: '100%',
-                      outline: 'none'
-                    }}
-                  />
-                  {loginErrors.name && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.name}</span>}
-                </div>
+                <form onSubmit={handleSignupFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Choose username"
+                        value={loginForm.username}
+                        onChange={e => setLoginForm({ ...loginForm, username: e.target.value })}
+                        style={{
+                          background: 'var(--bg-glass)',
+                          border: '1px solid var(--border-accent)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          outline: 'none'
+                        }}
+                      />
+                      {loginErrors.username && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.username}</span>}
+                    </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Create password"
+                        value={loginForm.password}
+                        onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+                        style={{
+                          background: 'var(--bg-glass)',
+                          border: '1px solid var(--border-accent)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          outline: 'none'
+                        }}
+                      />
+                      {loginErrors.password && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.password}</span>}
+                    </div>
+                  </div>
+
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                      Age (must be 18+)
+                      Name
                     </label>
                     <input
-                      type="number"
-                      placeholder="e.g. 25"
-                      value={loginForm.age}
-                      onChange={e => setLoginForm({ ...loginForm, age: e.target.value })}
+                      type="text"
+                      placeholder="Enter full name"
+                      value={loginForm.name}
+                      onChange={e => setLoginForm({ ...loginForm, name: e.target.value })}
                       style={{
                         background: 'var(--bg-glass)',
                         border: '1px solid var(--border-accent)',
@@ -1258,16 +1426,70 @@ export default function Navbar() {
                         outline: 'none'
                       }}
                     />
-                    {loginErrors.age && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.age}</span>}
+                    {loginErrors.name && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.name}</span>}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                        Age (must be 18+)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 25"
+                        value={loginForm.age}
+                        onChange={e => setLoginForm({ ...loginForm, age: e.target.value })}
+                        style={{
+                          background: 'var(--bg-glass)',
+                          border: '1px solid var(--border-accent)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          outline: 'none'
+                        }}
+                      />
+                      {loginErrors.age && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.age}</span>}
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                        Area / Ward
+                      </label>
+                      <select
+                        value={loginForm.area}
+                        onChange={e => setLoginForm({ ...loginForm, area: e.target.value })}
+                        style={{
+                          background: 'var(--bg-glass)',
+                          border: '1px solid var(--border-accent)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          outline: 'none',
+                          height: '35px'
+                        }}
+                      >
+                        <option value="Ward 150 - Bellandur">Ward 150 - Bellandur</option>
+                        <option value="Ward 84 - Halasuru">Ward 84 - Halasuru</option>
+                        <option value="Ward 174 - HSR Layout">Ward 174 - HSR Layout</option>
+                        <option value="Ward 112 - Domlur">Ward 112 - Domlur</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                      Area / Ward
+                      Aadhaar Number (12 digits)
                     </label>
-                    <select
-                      value={loginForm.area}
-                      onChange={e => setLoginForm({ ...loginForm, area: e.target.value })}
+                    <input
+                      type="text"
+                      placeholder="XXXX XXXX XXXX"
+                      maxLength="12"
+                      value={loginForm.aadhaar}
+                      onChange={e => setLoginForm({ ...loginForm, aadhaar: e.target.value.replace(/\D/g, '') })}
                       style={{
                         background: 'var(--bg-glass)',
                         border: '1px solid var(--border-accent)',
@@ -1277,77 +1499,103 @@ export default function Navbar() {
                         fontSize: '0.85rem',
                         width: '100%',
                         outline: 'none',
-                        height: '35px'
+                        fontFamily: 'monospace'
                       }}
-                    >
-                      <option value="Ward 150 - Bellandur">Ward 150 - Bellandur</option>
-                      <option value="Ward 84 - Halasuru">Ward 84 - Halasuru</option>
-                      <option value="Ward 174 - HSR Layout">Ward 174 - HSR Layout</option>
-                      <option value="Ward 112 - Domlur">Ward 112 - Domlur</option>
-                    </select>
+                    />
+                    <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.68rem', marginTop: '0.2rem' }}>
+                      🔒 Secure Aadhaar Verification (restricted to 18+ only).
+                    </span>
+                    {loginErrors.aadhaar && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.aadhaar}</span>}
                   </div>
-                </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                    Aadhaar Number (12 digits)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="XXXX XXXX XXXX"
-                    maxLength="12"
-                    value={loginForm.aadhaar}
-                    onChange={e => setLoginForm({ ...loginForm, aadhaar: e.target.value.replace(/\D/g, '') })}
-                    style={{
-                      background: 'var(--bg-glass)',
-                      border: '1px solid var(--border-accent)',
-                      color: 'var(--text-primary)',
-                      borderRadius: '6px',
-                      padding: '0.5rem',
-                      fontSize: '0.85rem',
-                      width: '100%',
-                      outline: 'none',
-                      fontFamily: 'monospace'
-                    }}
-                  />
-                  <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.68rem', marginTop: '0.2rem' }}>
-                    🔒 Secure Aadhaar Verification (restricted to 18+ only).
-                  </span>
-                  {loginErrors.aadhaar && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.aadhaar}</span>}
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                    Phone Number (10 digits)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter mobile number"
-                    maxLength="10"
-                    value={loginForm.phone}
-                    onChange={e => setLoginForm({ ...loginForm, phone: e.target.value.replace(/\D/g, '') })}
-                    style={{
-                      background: 'var(--bg-glass)',
-                      border: '1px solid var(--border-accent)',
-                      color: 'var(--text-primary)',
-                      borderRadius: '6px',
-                      padding: '0.5rem',
-                      fontSize: '0.85rem',
-                      width: '100%',
-                      outline: 'none'
-                    }}
-                  />
-                  {loginErrors.phone && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.phone}</span>}
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                      Gender
+                      Phone Number (10 digits)
                     </label>
-                    <select
-                      value={loginForm.gender}
-                      onChange={e => setLoginForm({ ...loginForm, gender: e.target.value })}
+                    <input
+                      type="text"
+                      placeholder="Enter mobile number"
+                      maxLength="10"
+                      value={loginForm.phone}
+                      onChange={e => setLoginForm({ ...loginForm, phone: e.target.value.replace(/\D/g, '') })}
+                      style={{
+                        background: 'var(--bg-glass)',
+                        border: '1px solid var(--border-accent)',
+                        color: 'var(--text-primary)',
+                        borderRadius: '6px',
+                        padding: '0.5rem',
+                        fontSize: '0.85rem',
+                        width: '100%',
+                        outline: 'none'
+                      }}
+                    />
+                    {loginErrors.phone && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.phone}</span>}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                        Gender
+                      </label>
+                      <select
+                        value={loginForm.gender}
+                        onChange={e => setLoginForm({ ...loginForm, gender: e.target.value })}
+                        style={{
+                          background: 'var(--bg-glass)',
+                          border: '1px solid var(--border-accent)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          outline: 'none',
+                          height: '35px'
+                        }}
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-Binary">Non-Binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                        Occupation
+                      </label>
+                      <select
+                        value={loginForm.occupation}
+                        onChange={e => setLoginForm({ ...loginForm, occupation: e.target.value })}
+                        style={{
+                          background: 'var(--bg-glass)',
+                          border: '1px solid var(--border-accent)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          fontSize: '0.85rem',
+                          width: '100%',
+                          outline: 'none',
+                          height: '35px'
+                        }}
+                      >
+                        <option value="Salaried Professional">Salaried Professional</option>
+                        <option value="Self-Employed">Self-Employed</option>
+                        <option value="Student">Student</option>
+                        <option value="Homemaker">Homemaker</option>
+                        <option value="Retired">Retired</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                      Home Address
+                    </label>
+                    <textarea
+                      placeholder="Enter residential address"
+                      value={loginForm.address}
+                      onChange={e => setLoginForm({ ...loginForm, address: e.target.value })}
                       style={{
                         background: 'var(--bg-glass)',
                         border: '1px solid var(--border-accent)',
@@ -1357,92 +1605,36 @@ export default function Navbar() {
                         fontSize: '0.85rem',
                         width: '100%',
                         outline: 'none',
-                        height: '35px'
+                        height: '60px',
+                        resize: 'none'
                       }}
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Non-Binary">Non-Binary</option>
-                      <option value="Prefer not to say">Prefer not to say</option>
-                    </select>
+                    />
+                    {loginErrors.address && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.address}</span>}
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                      Occupation
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <input
+                      type="checkbox"
+                      id="consent-check"
+                      checked={loginForm.consent}
+                      onChange={e => setLoginForm({ ...loginForm, consent: e.target.checked })}
+                      style={{ marginTop: '0.2rem' }}
+                    />
+                    <label htmlFor="consent-check" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.3' }}>
+                      I agree to verify my identity and participate in community auditing under DPDPA-2023 guidelines. I confirm that I am 18 years of age or older.
                     </label>
-                    <select
-                      value={loginForm.occupation}
-                      onChange={e => setLoginForm({ ...loginForm, occupation: e.target.value })}
-                      style={{
-                        background: 'var(--bg-glass)',
-                        border: '1px solid var(--border-accent)',
-                        color: 'var(--text-primary)',
-                        borderRadius: '6px',
-                        padding: '0.5rem',
-                        fontSize: '0.85rem',
-                        width: '100%',
-                        outline: 'none',
-                        height: '35px'
-                      }}
-                    >
-                      <option value="Salaried Professional">Salaried Professional</option>
-                      <option value="Self-Employed">Self-Employed</option>
-                      <option value="Student">Student</option>
-                      <option value="Homemaker">Homemaker</option>
-                      <option value="Retired">Retired</option>
-                      <option value="Other">Other</option>
-                    </select>
                   </div>
-                </div>
+                  {loginErrors.consent && <span style={{ color: '#ef4444', fontSize: '0.7rem', display: 'block' }}>{loginErrors.consent}</span>}
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
-                    Home Address
-                  </label>
-                  <textarea
-                    placeholder="Enter residential address"
-                    value={loginForm.address}
-                    onChange={e => setLoginForm({ ...loginForm, address: e.target.value })}
-                    style={{
-                      background: 'var(--bg-glass)',
-                      border: '1px solid var(--border-accent)',
-                      color: 'var(--text-primary)',
-                      borderRadius: '6px',
-                      padding: '0.5rem',
-                      fontSize: '0.85rem',
-                      width: '100%',
-                      outline: 'none',
-                      height: '60px',
-                      resize: 'none'
-                    }}
-                  />
-                  {loginErrors.address && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.15rem', display: 'block' }}>{loginErrors.address}</span>}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.25rem' }}>
-                  <input
-                    type="checkbox"
-                    id="consent-check"
-                    checked={loginForm.consent}
-                    onChange={e => setLoginForm({ ...loginForm, consent: e.target.checked })}
-                    style={{ marginTop: '0.2rem' }}
-                  />
-                  <label htmlFor="consent-check" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.3' }}>
-                    I agree to verify my identity and participate in community auditing under DPDPA-2023 guidelines. I confirm that I am 18 years of age or older.
-                  </label>
-                </div>
-                {loginErrors.consent && <span style={{ color: '#ef4444', fontSize: '0.7rem', display: 'block' }}>{loginErrors.consent}</span>}
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ justifyContent: 'center', padding: '0.65rem', marginTop: '0.5rem', fontWeight: 700 }}
-                >
-                  Send OTP Verification →
-                </button>
-              </form>
-             </>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ justifyContent: 'center', padding: '0.65rem', marginTop: '0.5rem', fontWeight: 700 }}
+                  >
+                    Send OTP Verification →
+                  </button>
+                </form>
+              </>
             ) : (
               <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ textAlign: 'center', padding: '0.5rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '8px', border: '1px solid rgba(99, 102, 241, 0.15)' }}>
@@ -1500,7 +1692,7 @@ export default function Navbar() {
                       }}></span> Verifying...
                     </div>
                   ) : (
-                    'Verify & Sign In 🔓'
+                    'Verify & Create Account 🔓'
                   )}
                 </button>
                 <button
