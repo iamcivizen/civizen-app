@@ -13,6 +13,7 @@ import WardOfficials from './pages/WardOfficials.jsx';
 import RedeemSubsidies from './pages/RedeemSubsidies.jsx';
 import DpdpaBanner from './components/DpdpaBanner.jsx';
 import ZenithChatbot from './components/ZenithChatbot.jsx';
+import BottomNav from './components/BottomNav.jsx';
 
 function AppContent() {
   const { state } = useApp();
@@ -41,6 +42,7 @@ function AppContent() {
         </Routes>
         <DpdpaBanner />
         <ZenithChatbot />
+        <BottomNav />
       </div>
     </div>
   );
