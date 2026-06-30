@@ -32,6 +32,13 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
         run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "${{ runner.temp }}/sa.json"
 
+      - name: Validate credentials
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          jq -e '.client_email, .private_key_id, .type' "$GOOGLE_APPLICATION_CREDENTIALS" || echo "Invalid JSON"
+          npx firebase-tools@13.29.1 projects:list --non-interactive
+          
       - name: Deploy to Firebase Hosting
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
