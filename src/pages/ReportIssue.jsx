@@ -477,7 +477,7 @@ export default function ReportIssue() {
 
       const mapped = mapAIToCategories(englishTranslate);
       setForm(f => {
-        const newDesc = buildDescriptionWithVoiceNote(f.description, localTranscript);
+        const newDesc = buildDescriptionWithVoiceNote(f.description, englishTranslate);
         runAiAnalysis(f.title || mapped.title, englishTranslate);
         return { 
           ...f, 
@@ -530,7 +530,7 @@ export default function ReportIssue() {
           
           const mapped = mapAIToCategories(english);
           setForm(f => {
-            const newDesc = buildDescriptionWithVoiceNote(f.description, text);
+            const newDesc = buildDescriptionWithVoiceNote(f.description, english);
             runAiAnalysis(f.title || mapped.title, english);
             return {
               ...f,
@@ -708,28 +708,30 @@ export default function ReportIssue() {
               <h3 className="form-section-title">🎙️ {t("AI Intake: Voice & Photo First")}</h3>
               
               <div style={{
-                background: 'rgba(99, 102, 241, 0.05)',
-                border: '1px solid rgba(99, 102, 241, 0.25)',
+                background: 'rgba(99, 102, 241, 0.08)',
+                border: '1px solid rgba(99, 102, 241, 0.35)',
                 padding: '1rem 1.25rem',
                 borderRadius: '12px',
                 marginBottom: '1.5rem',
                 boxShadow: 'var(--shadow-sm)'
               }}>
-                <p style={{
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  lineHeight: '1.55',
-                  margin: 0,
+                <div style={{
                   display: 'flex',
                   gap: '0.65rem',
                   alignItems: 'flex-start'
                 }}>
                   <span style={{ fontSize: '1.25rem', marginTop: '-0.1rem' }}>💡</span>
-                  <span>
-                    <strong>{t("Instructions:")}</strong> {t("Upload a photo of the issue (mandatory for verification) and optionally record a voice description. Zenith AI will transcribe and classify details automatically. You can also manually type or edit details below.")}
-                  </span>
-                </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {t("Quick steps")}
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '1.1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                      <li><strong>{t("Upload a photo")}</strong> — {t("Required for verification.")}</li>
+                      <li><strong>{t("Record or type details")}</strong> — {t("Zenith AI detects the language, translates it to English, and classifies the issue.")}</li>
+                      <li><strong>{t("Review before submit")}</strong> — {t("Edit any auto-filled details if needed.")}</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               {/* Row for Voice Recorder & Photo Dropzone */}

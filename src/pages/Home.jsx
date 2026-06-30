@@ -43,7 +43,8 @@ export default function Home() {
           </Link>
 
           <h1 className="hero-title">
-            {t("Be the Change")}
+            {t("Be the Change")}<br/>
+            <span className="hero-gradient">{t("Your Community Needs")}</span>
           </h1>
 
           <p className="hero-subtitle">
