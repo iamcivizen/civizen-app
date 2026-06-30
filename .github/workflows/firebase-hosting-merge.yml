@@ -24,11 +24,74 @@ jobs:
           npm ci || npm install
           npm run build
 
+      - name: Validate Firebase service account secret
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "Missing FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP secret"
+            exit 1
+          fi
+          node -e "const raw = process.env.FIREBASE_SERVICE_ACCOUNT || ''; if (!raw) { console.error('Service account secret is empty'); process.exit(1); } let data; try { data = JSON.parse(raw); } catch (err) { console.error('Service account secret is not valid JSON: ' + err.message); process.exit(1); } const required = ['type', 'project_id', 'private_key', 'client_email']; const missing = required.filter((key) => !data[key]); if (missing.length) { console.error('Service account secret is missing required fields: ' + missing.join(', ')); process.exit(1); } console.log('Firebase service account secret is valid.');"
+
+      - name: Authenticate Firebase CLI
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
+        run: |
+          node -e "const fs = require('fs'); fs.writeFileSync(process.env.GITHUB_WORKSPACE + '/firebase-service-account.json', process.env.FIREBASE_SERVICE_ACCOUNT);"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-service-account.json" >> "$GITHUB_ENV"
+
+      - name: Verify written credentials and Google Auth
+        run: |
+          node -e '
+          const fs = require("fs");
+          const crypto = require("crypto");
+          const https = require("https");
+          const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+          const keyData = JSON.parse(fs.readFileSync(keyPath, "utf8"));
+          const { client_email, private_key } = keyData;
+          console.log("Client Email:", client_email);
+          const base64url = (str) => Buffer.from(str).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+          const header = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+          const now = Math.floor(Date.now() / 1000);
+          const payload = base64url(JSON.stringify({
+            iss: client_email,
+            scope: "https://www.googleapis.com/auth/cloud-platform",
+            aud: "https://oauth2.googleapis.com/token",
+            exp: now + 3600,
+            iat: now
+          }));
+          const sign = crypto.createSign("RSA-SHA256");
+          sign.update(header + "." + payload);
+          const signature = base64url(sign.sign(private_key));
+          const assertion = header + "." + payload + "." + signature;
+          const postData = "grant_type=" + encodeURIComponent("urn:ietf:params:oauth:grant-type:jwt-bearer") + "&assertion=" + encodeURIComponent(assertion);
+          const req = https.request({
+            hostname: "oauth2.googleapis.com",
+            path: "/token",
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "Content-Length": Buffer.byteLength(postData)
+            }
+          }, (res) => {
+            let body = "";
+            res.on("data", (chunk) => body += chunk);
+            res.on("end", () => {
+              const resData = JSON.parse(body);
+              if (res.statusCode === 200) {
+                console.log("Google Authentication successful! Access token generated. Expiring in:", resData.expires_in);
+              } else {
+                console.error("Google Auth API Error Response:", JSON.stringify(resData, null, 2));
+                process.exit(1);
+              }
+            });
+          });
+          req.on("error", (e) => { console.error("Request error:", e); process.exit(1); });
+          req.write(postData);
+          req.end();
+          '
+
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}'
-          projectId: civizen-civic-app
-          channelId: live
-          firebaseToolsVersion: '13.29.1'
+        run: |
+          npx firebase-tools deploy --only hosting --project civizen-civic-app --non-interactive --debug
