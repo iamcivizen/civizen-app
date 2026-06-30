@@ -27,36 +27,52 @@ jobs:
           echo "Build Time: $(date)" > public/build-timestamp.txt
           npm run build
 
+      - name: Validate Firebase service account secret
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP is not set in GitHub Secrets."
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          raw = os.environ['FIREBASE_SERVICE_ACCOUNT']
+          try:
+              data = json.loads(raw)
+          except Exception as exc:
+              print(f"The Firebase service account secret is not valid JSON: {exc}")
+              sys.exit(1)
+          required = ['type', 'project_id', 'private_key', 'client_email']
+          missing = [key for key in required if not data.get(key)]
+          if missing:
+              print(f"The Firebase service account secret is missing required fields: {missing}")
+              sys.exit(1)
+          if data.get('type') != 'service_account':
+              print("The Firebase service account secret does not look like a service-account JSON object.")
+              sys.exit(1)
+          print("Firebase service account secret format looks valid.")
+          PY
+
       - name: Write service account credentials
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
-        run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "${{ runner.temp }}/sa.json"
-
-      - name: Validate credentials
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
         run: |
-          jq -e '.client_email, .private_key_id, .type' "$GOOGLE_APPLICATION_CREDENTIALS" || echo "Invalid JSON"
-          npx firebase-tools@13.29.1 projects:list --non-interactive
-          
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          path = Path(os.environ['RUNNER_TEMP']) / 'sa.json'
+          path.write_text(os.environ['FIREBASE_SERVICE_ACCOUNT'], encoding='utf-8')
+          print(path)
+          PY
+
       - name: Deploy to Firebase Hosting
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
         run: |
-          for attempt in 1 2 3; do
-            echo "Deploy attempt $attempt..."
-            if npx firebase-tools@13.29.1 deploy --only hosting --project civizen-civic-app --non-interactive; then
-              echo "Deploy succeeded."
-              exit 0
-            fi
-            echo "Attempt $attempt failed."
-            if [ "$attempt" -lt 3 ]; then
-              echo "Retrying in 10s..."
-              sleep 10
-            fi
-          done
-          echo "All attempts failed."
-          exit 1
+          npx firebase-tools@latest deploy --only hosting --project civizen-civic-app --non-interactive
 
       - name: Clean up credentials
         if: always()
