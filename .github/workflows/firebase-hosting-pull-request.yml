@@ -26,10 +26,46 @@ jobs:
           echo "Build Time: $(date)" > public/build-timestamp.txt
           npm run build
 
+      - name: Validate Firebase service account secret
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "Missing FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP secret"
+            exit 1
+          fi
+          python - <<'PY'
+import json
+import os
+import sys
+
+raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "")
+if not raw:
+    print("Service account secret is empty")
+    sys.exit(1)
+
+try:
+    data = json.loads(raw)
+except Exception as exc:
+    print(f"Service account secret is not valid JSON: {exc}")
+    sys.exit(1)
+
+required = ["type", "project_id", "private_key", "client_email"]
+missing = [key for key in required if not data.get(key)]
+if missing:
+    print(f"Service account secret is missing required fields: {', '.join(missing)}")
+    sys.exit(1)
+
+print("Firebase service account secret is valid.")
+PY
+
+      - name: Authenticate Firebase CLI
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$GITHUB_WORKSPACE/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE/firebase-service-account.json" >> "$GITHUB_ENV"
+
       - name: Deploy Preview to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}'
-          projectId: civizen-civic-app
-          firebaseToolsVersion: '13.29.1'
+        run: |
+          npx firebase-tools@13.29.1 hosting:channel:deploy pr-${{ github.event.pull_request.number }} --project civizen-civic-app --non-interactive
