@@ -32,7 +32,7 @@ export default function Home() {
         <div className="hero-content">
           <div className="hero-badge">
             <span className="live-dot" style={{ width: 8, height: 8, background: 'var(--accent-secondary)', borderRadius: '50%', display: 'inline-block', animation: 'pulse-dot 2s infinite' }}></span>
-            &nbsp; {t("Live Community Platform")}
+            &nbsp; {t("Live Community Platform!!")}
           </div>
 
           {/* Large Premium Styled Brand Logo */}
