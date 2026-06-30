@@ -36,14 +36,14 @@ export default function Home() {
           </div>
 
           {/* Large Premium Styled Brand Logo */}
-          <div className="hero-brand">
+          <Link to="/" className="hero-brand" aria-label="Go to home page">
             <span className="brand-name-main">Civi</span>
             <span className="brand-name-sub">zen</span>
             <span className="brand-icon">⚡</span>
-          </div>
+          </Link>
 
           <h1 className="hero-title">
-            {t("Be the Changes")}<br/>
+            {t("Be the Change")}<br/>
             <span className="hero-gradient">{t("Your Community Needs")}</span>
           </h1>
 

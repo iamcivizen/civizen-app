@@ -32,13 +32,13 @@ export default function Sidebar() {
       )}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* Logo */}
-        <div className="sidebar-logo">
+        <Link to="/" className="sidebar-logo" onClick={() => dispatch({ type: 'SET_SIDEBAR', payload: false })}>
           <div className="logo-icon">⚡</div>
           <div className="logo-text">
             <span className="logo-main">Civi</span>
             <span className="logo-sub">zen</span>
           </div>
-        </div>
+        </Link>
 
         {/* User Profile & Progress Link */}
         {isLoggedIn ? (

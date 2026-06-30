@@ -199,7 +199,7 @@ export default function ReportIssue() {
   const [images, setImages] = useState([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [voiceLanguage, setVoiceLanguage] = useState('kn');
+  const [voiceLanguage, setVoiceLanguage] = useState('en');
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [englishTranslation, setEnglishTranslation] = useState('');
   const [aiResult, setAiResult] = useState(null);
@@ -407,6 +407,35 @@ export default function ReportIssue() {
     }, 700);
   };
 
+  const buildDescriptionWithVoiceNote = (currentDescription, voiceText) => {
+    const trimmedVoice = voiceText?.trim();
+    if (!trimmedVoice) return currentDescription || '';
+
+    const existingLines = (currentDescription || '')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    if (existingLines.includes(trimmedVoice)) {
+      return existingLines.join('\n');
+    }
+
+    return [currentDescription, trimmedVoice].filter(Boolean).join('\n');
+  };
+
+  const removeVoiceNoteFromDescription = (currentDescription, voiceText) => {
+    const trimmedVoice = voiceText?.trim();
+    if (!trimmedVoice) return currentDescription || '';
+
+    const existingLines = (currentDescription || '')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    const filteredLines = existingLines.filter(line => line !== trimmedVoice);
+    return filteredLines.join('\n');
+  };
+
   const runMockVoiceSimulation = () => {
     setIsRecording(true);
     setTimeout(() => {
@@ -448,7 +477,7 @@ export default function ReportIssue() {
 
       const mapped = mapAIToCategories(englishTranslate);
       setForm(f => {
-        const newDesc = f.description ? `${f.description}\n${localTranscript}` : localTranscript;
+        const newDesc = buildDescriptionWithVoiceNote(f.description, localTranscript);
         runAiAnalysis(f.title || mapped.title, englishTranslate);
         return { 
           ...f, 
@@ -501,7 +530,7 @@ export default function ReportIssue() {
           
           const mapped = mapAIToCategories(english);
           setForm(f => {
-            const newDesc = f.description ? `${f.description}\n${text}` : text;
+            const newDesc = buildDescriptionWithVoiceNote(f.description, text);
             runAiAnalysis(f.title || mapped.title, english);
             return {
               ...f,
@@ -529,6 +558,21 @@ export default function ReportIssue() {
         runMockVoiceSimulation();
       }
     }
+  };
+
+  const handleDeleteVoiceNote = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
+    const currentVoiceNote = voiceTranscript;
+    setIsRecording(false);
+    setVoiceTranscript('');
+    setEnglishTranslation('');
+    setForm(f => ({
+      ...f,
+      description: removeVoiceNoteFromDescription(f.description, currentVoiceNote)
+    }));
   };
 
   const handleTextChange = (e) => {
@@ -718,7 +762,7 @@ export default function ReportIssue() {
                       <option value="mr">ಮರಾಠಿ</option>
                     </select>
                   </div>
-                  <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+                  <div style={{ textAlign: 'center', padding: '0.5rem 0', display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       className={`voice-record-btn ${isRecording ? 'recording' : ''}`}
@@ -740,6 +784,27 @@ export default function ReportIssue() {
                     >
                       <span>{isRecording ? '🔴 Listening...' : `🎙️ ${t("Tap to Record Voice")}`}</span>
                     </button>
+                    {voiceTranscript && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteVoiceNote}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          color: '#dc2626',
+                          border: 'none',
+                          borderRadius: '20px',
+                          padding: '0.35rem 0.85rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        🗑️ {t("Delete")}
+                      </button>
+                    )}
                   </div>
                   {voiceTranscript && (
                     <p className="text-xs" style={{ marginTop: '0.5rem', color: 'var(--accent-purple)', fontWeight: 600, fontStyle: 'italic', textAlign: 'center' }}>
