@@ -32,4 +32,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIVIZEN_CIVIC_APP }}'
           projectId: civizen-civic-app
-          firebaseToolsVersion: 'latest'
+          firebaseToolsVersion: '13.29.1'
